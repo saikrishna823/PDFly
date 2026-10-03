@@ -1,0 +1,169 @@
+<div class="tool-page container">
+  <app-tool-header [tool]="tool" />
+
+  <section class="tool-panel card" aria-label="Converter">
+    @switch (phase()) {
+      @case ('opening') {
+        <app-progress-indicator label="Opening your PDF…" />
+      }
+      @case ('processing') {
+        <app-progress-indicator [label]="progressLabel()" [percent]="progressPercent()" />
+        <div class="tool-actions">
+          <button type="button" class="btn btn-secondary" (click)="cancelConversion()">Cancel</button>
+        </div>
+      }
+      @case ('done') {
+        @if (result(); as r) {
+          <app-result-panel
+            [heading]="r.images.length ? 'Your images are ready' : 'Your image is ready'"
+            [downloadLabel]="r.images.length ? 'Download all (ZIP)' : 'Download'"
+            [fileName]="r.fileName"
+            [fileSize]="r.blob.size"
+            resetLabel="Convert another PDF"
+            (download)="download()"
+            (reset)="reset()"
+          >
+            <button type="button" class="link-btn" (click)="changeSettings()">
+              Change pages or settings
+            </button>
+
+            @if (r.downscaled) {
+              <p class="note">
+                Some very large pages were saved at a lower resolution to stay within this browser's limits.
+              </p>
+            }
+
+            @if (r.images.length) {
+              <div class="outputs">
+                <h3>Or download pages one by one</h3>
+                <ul class="output-grid">
+                  @for (image of r.images; track image.pageNumber) {
+                    <li class="output">
+                      <img [src]="image.url" [alt]="'Page ' + image.pageNumber" />
+                      <div class="output-meta">
+                        <span>Page {{ image.pageNumber }}</span>
+                        <span class="output-size">{{ image.blob.size | fileSize }}</span>
+                      </div>
+                      <button
+                        type="button"
+                        class="icon-btn"
+                        title="Download"
+                        [attr.aria-label]="'Download page ' + image.pageNumber"
+                        (click)="downloadImage(image)"
+                      >
+                        <app-icon name="download" [size]="18" />
+                      </button>
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+          </app-result-panel>
+        }
+      }
+      @default {
+        <div class="tool-messages">
+          @if (error(); as message) {
+            <app-error-alert [message]="message" (dismiss)="error.set(null)" />
+          }
+        </div>
+
+        @if (phase() === 'select') {
+          <app-file-dropzone
+            accept=".pdf,application/pdf"
+            [maxBytes]="maxBytes"
+            title="Drop your PDF here"
+            buttonLabel="Select PDF"
+            [hint]="hint"
+            (selected)="onSelected($event)"
+          />
+        } @else if (file(); as f) {
+          <div class="tool-workspace">
+            <div class="tool-main">
+              <div class="file-row">
+                <span class="file-icon"><app-icon name="file" [size]="22" /></span>
+                <div class="file-meta">
+                  <p class="file-name" [title]="f.name">{{ f.name }}</p>
+                  <p class="file-size">
+                    {{ f.size | fileSize }} · {{ pageCount() }} {{ pageCount() === 1 ? 'page' : 'pages' }}
+                  </p>
+                </div>
+                <button type="button" class="icon-btn danger" [attr.aria-label]="'Remove ' + f.name" title="Remove" (click)="reset()">
+                  <app-icon name="close" [size]="18" />
+                </button>
+              </div>
+
+              <div class="selection-bar">
+                <div class="selection-buttons">
+                  <button type="button" class="btn btn-secondary btn-sm" (click)="selectAll()">Select all</button>
+                  <button type="button" class="btn btn-secondary btn-sm" (click)="selectNone()">Select none</button>
+                </div>
+                <form class="range-form" [formGroup]="rangeForm" (ngSubmit)="applyRange()">
+                  <label class="visually-hidden" for="page-range">Select pages by number</label>
+                  <input
+                    id="page-range"
+                    class="input"
+                    formControlName="range"
+                    placeholder="e.g. 1-3, 5, 8-"
+                    autocomplete="off"
+                    [attr.aria-invalid]="rangeError() ? 'true' : null"
+                    [attr.aria-describedby]="rangeError() ? 'range-error' : null"
+                  />
+                  <button type="submit" class="btn btn-secondary btn-sm">Select</button>
+                </form>
+              </div>
+              @if (rangeError(); as message) {
+                <p id="range-error" class="field-error" role="alert">{{ message }}</p>
+              }
+              <p class="selection-summary" aria-live="polite">{{ selectionSummary() }}</p>
+
+              <app-page-picker [pages]="pages()" [selected]="selected()" (toggle)="togglePage($event)" />
+            </div>
+
+            <aside class="tool-sidebar">
+              <fieldset class="settings" [formGroup]="form">
+                <legend>Image settings</legend>
+
+                <div class="field">
+                  <label class="field-label" for="opt-format">Format</label>
+                  <select id="opt-format" class="select" formControlName="format">
+                    @for (choice of formats; track choice.value) {
+                      <option [ngValue]="choice.value">{{ choice.label }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label class="field-label" for="opt-dpi">Resolution</label>
+                  <select id="opt-dpi" class="select" formControlName="dpi">
+                    @for (choice of resolutions; track choice.value) {
+                      <option [ngValue]="choice.value">{{ choice.label }}</option>
+                    }
+                  </select>
+                </div>
+
+                @if (format() === 'jpeg') {
+                  <div class="field">
+                    <label class="field-label" for="opt-quality">JPEG quality: {{ quality() }}%</label>
+                    <input id="opt-quality" type="range" min="50" max="100" step="5" formControlName="quality" />
+                    <p class="field-hint">Lower quality makes smaller files.</p>
+                  </div>
+                }
+              </fieldset>
+
+              <button
+                type="button"
+                class="btn btn-primary btn-lg"
+                [disabled]="selected().size === 0"
+                (click)="convert()"
+              >
+                Convert {{ selected().size }} {{ selected().size === 1 ? 'page' : 'pages' }}
+              </button>
+              <button type="button" class="btn btn-secondary" (click)="reset()">Start over</button>
+            </aside>
+          </div>
+        }
+      }
+    }
+  </section>
+</div>

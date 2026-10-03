@@ -1,0 +1,81 @@
+<p class="visually-hidden" aria-live="polite">{{ announcement() }}</p>
+
+<ol class="pages" [class.single]="!reorderable()" [attr.aria-label]="reorderable() ? 'Pages in order' : 'Page preview'">
+  @for (page of pages(); track page.item.id; let i = $index, first = $first, last = $last) {
+    @let name = page.item.file.name;
+    <li
+      class="page-card"
+      [class.dragging]="dragIndex() === i"
+      [class.drop-target]="dropIndex() === i && dragIndex() !== i"
+      [attr.draggable]="reorderable() ? 'true' : null"
+      (dragstart)="onDragStart($event, i)"
+      (dragover)="onDragOver($event, i)"
+      (drop)="onDrop($event, i)"
+      (dragend)="onDragEnd()"
+    >
+      <div class="preview">
+        <app-page-preview [src]="page.item.previewUrl" [alt]="'Preview of ' + name" [layout]="page.layout" />
+      </div>
+
+      <div class="meta">
+        @if (reorderable()) {
+          <span class="page-number">Page {{ i + 1 }}</span>
+        }
+        <p class="name" [title]="name">{{ name }}</p>
+        <p class="details">{{ page.item.file.size | fileSize }} · {{ page.item.width }} × {{ page.item.height }} px</p>
+      </div>
+
+      <div class="controls" role="group" [attr.aria-label]="'Actions for ' + name">
+        <button
+          type="button"
+          class="icon-btn"
+          title="Rotate left"
+          [attr.aria-label]="'Rotate ' + name + ' left'"
+          (click)="rotate.emit({ id: page.item.id, delta: -90 })"
+        >
+          <app-icon name="rotate-ccw" [size]="18" />
+        </button>
+        <button
+          type="button"
+          class="icon-btn"
+          title="Rotate right"
+          [attr.aria-label]="'Rotate ' + name + ' right'"
+          (click)="rotate.emit({ id: page.item.id, delta: 90 })"
+        >
+          <app-icon name="rotate-cw" [size]="18" />
+        </button>
+        @if (reorderable()) {
+          <button
+            type="button"
+            class="icon-btn"
+            title="Move earlier"
+            [attr.aria-label]="'Move ' + name + ' earlier'"
+            [disabled]="first"
+            (click)="moveBy(i, -1)"
+          >
+            <app-icon name="arrow-left" [size]="18" />
+          </button>
+          <button
+            type="button"
+            class="icon-btn"
+            title="Move later"
+            [attr.aria-label]="'Move ' + name + ' later'"
+            [disabled]="last"
+            (click)="moveBy(i, 1)"
+          >
+            <app-icon name="arrow-right" [size]="18" />
+          </button>
+        }
+        <button
+          type="button"
+          class="icon-btn danger"
+          title="Remove"
+          [attr.aria-label]="'Remove ' + name"
+          (click)="onRemove(page.item)"
+        >
+          <app-icon name="trash" [size]="18" />
+        </button>
+      </div>
+    </li>
+  }
+</ol>

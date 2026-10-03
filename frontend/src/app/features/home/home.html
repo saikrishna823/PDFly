@@ -1,0 +1,66 @@
+<section class="hero">
+  <div class="container hero-inner">
+    <p class="eyebrow"><app-icon name="shield" [size]="18" /> Privacy-first</p>
+    <h1>Private PDF Tools</h1>
+    <p class="lead">Convert and manage your files with privacy in mind.</p>
+    <p class="sublead">Your files stay on your device whenever possible.</p>
+    <a class="btn btn-primary btn-lg" routerLink="/" fragment="tools">Choose a tool</a>
+  </div>
+</section>
+
+<section id="tools" class="container tools" aria-labelledby="tools-title">
+  <h2 id="tools-title" class="section-title">All tools</h2>
+  <ul class="tool-grid">
+    @for (tool of tools; track tool.id) {
+      <li>
+        @if (tool.status === 'available') {
+          <a class="tool-card card" [routerLink]="['/', tool.path]">
+            <ng-container *ngTemplateOutlet="cardBody; context: { $implicit: tool }" />
+          </a>
+        } @else {
+          <div class="tool-card card disabled" aria-disabled="true">
+            <ng-container *ngTemplateOutlet="cardBody; context: { $implicit: tool }" />
+          </div>
+        }
+      </li>
+    }
+  </ul>
+</section>
+
+<ng-template #cardBody let-tool>
+  <span class="tool-icon"><app-icon [name]="tool.icon" [size]="26" /></span>
+  <h3>{{ tool.shortTitle }}</h3>
+  <p class="tool-description">{{ tool.description }}</p>
+  <span class="chips">
+    @if (tool.status === 'coming-soon') {
+      <span class="chip soon">Coming soon</span>
+    }
+    <span class="chip" [class.local]="tool.processing === 'local'" [class.server]="tool.processing === 'server'">
+      <app-icon [name]="tool.processing === 'local' ? 'device' : 'server'" [size]="14" />
+      {{ tool.processing === 'local' ? 'On your device' : 'Temporary server processing' }}
+    </span>
+  </span>
+</ng-template>
+
+<section id="privacy" class="container privacy" aria-labelledby="privacy-title">
+  <h2 id="privacy-title" class="section-title">How your files are handled</h2>
+  <div class="privacy-grid">
+    <article class="card privacy-card">
+      <span class="privacy-icon local"><app-icon name="device" [size]="24" /></span>
+      <h3>Processed locally</h3>
+      <p>
+        Tools marked <strong>On your device</strong> run entirely in your browser. Your file is never uploaded —
+        once a tool has opened, it keeps working even if you go offline.
+      </p>
+    </article>
+    <article class="card privacy-card">
+      <span class="privacy-icon server"><app-icon name="server" [size]="24" /></span>
+      <h3>Temporary server processing</h3>
+      <p>
+        Some conversions need software that can't run in a browser. For those, your file is sent over an encrypted
+        connection, processed in memory or a temporary folder, and deleted as soon as the result is sent back. Files
+        are not kept afterwards, and PDFly has no accounts and no analytics.
+      </p>
+    </article>
+  </div>
+</section>

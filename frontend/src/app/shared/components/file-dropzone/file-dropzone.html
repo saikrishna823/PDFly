@@ -1,0 +1,46 @@
+<div
+  class="dropzone"
+  [class.dragging]="dragging()"
+  [class.compact]="compact()"
+  (click)="openPicker()"
+  (dragenter)="onDragEnter($event)"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave()"
+  (drop)="onDrop($event)"
+>
+  <span class="badge" aria-hidden="true">
+    <app-icon [name]="compact() ? 'plus' : 'upload'" [size]="compact() ? 20 : 28" />
+  </span>
+
+  <div class="copy">
+    <p class="title">{{ dragging() ? 'Release to add' : title() }}</p>
+    @if (!compact()) {
+      <p class="or">or</p>
+    }
+  </div>
+
+  <button
+    type="button"
+    class="btn"
+    [class.btn-primary]="!compact()"
+    [class.btn-secondary]="compact()"
+    (click)="openPicker($event)"
+  >
+    {{ buttonLabel() }}
+  </button>
+
+  @if (hint()) {
+    <p class="hint">{{ hint() }}</p>
+  }
+
+  <input
+    #fileInput
+    type="file"
+    class="visually-hidden"
+    tabindex="-1"
+    aria-hidden="true"
+    [accept]="accept()"
+    [multiple]="multiple()"
+    (change)="onInputChange($event)"
+  />
+</div>

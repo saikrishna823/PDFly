@@ -1,0 +1,100 @@
+<div class="tool-page container">
+  <app-tool-header [tool]="tool()" />
+
+  <section class="tool-panel card" aria-label="Converter">
+    @switch (phase()) {
+      @case ('processing') {
+        <app-progress-indicator [label]="progressLabel()" [percent]="progressPercent()" />
+      }
+      @case ('done') {
+        @if (result(); as r) {
+          <app-result-panel
+            [fileName]="r.fileName"
+            [fileSize]="r.blob.size"
+            [resetLabel]="multiple() ? 'Convert more images' : 'Convert another image'"
+            (download)="download()"
+            (reset)="reset()"
+          />
+        }
+      }
+      @default {
+        <div class="tool-messages">
+          @if (error(); as message) {
+            <app-error-alert title="We couldn't create your PDF" [message]="message" (dismiss)="error.set(null)" />
+          }
+          @if (skipped().length) {
+            <app-error-alert title="Some files were not added" (dismiss)="skipped.set([])">
+              <ul class="skipped">
+                @for (line of skipped(); track $index) {
+                  <li>{{ line }}</li>
+                }
+              </ul>
+            </app-error-alert>
+          }
+        </div>
+
+        @if (!items().length && !loadingCount()) {
+          <app-file-dropzone
+            [accept]="accept"
+            [maxBytes]="maxBytes"
+            [multiple]="multiple()"
+            [title]="multiple() ? 'Drop your images here' : 'Drop your image here'"
+            [buttonLabel]="multiple() ? 'Select images' : 'Select image'"
+            [hint]="hint()"
+            (selected)="addFiles($event)"
+          />
+        } @else {
+          <div class="tool-workspace">
+            <div class="tool-main">
+              <app-image-page-list
+                [items]="items()"
+                [options]="options()"
+                [reorderable]="multiple()"
+                (remove)="removeItem($event)"
+                (rotate)="rotateItem($event)"
+                (move)="moveItem($event)"
+              />
+
+              @if (loadingCount()) {
+                <p class="loading" role="status">
+                  Reading {{ loadingCount() }} {{ loadingCount() === 1 ? 'image' : 'images' }}…
+                </p>
+              }
+
+              <app-file-dropzone
+                [accept]="accept"
+                [maxBytes]="maxBytes"
+                [multiple]="multiple()"
+                [compact]="true"
+                [title]="multiple() ? 'Add more images' : 'Use a different image'"
+                [buttonLabel]="multiple() ? 'Add images' : 'Replace image'"
+                [hint]="multiple() ? 'Drag pages to reorder them, or use the arrow buttons.' : ''"
+                (selected)="addFiles($event)"
+              />
+            </div>
+
+            <aside class="tool-sidebar">
+              <app-image-pdf-settings [form]="form" />
+
+              <div class="summary">
+                <p>
+                  <strong>{{ items().length }}</strong> {{ items().length === 1 ? 'page' : 'pages' }} will be created.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                class="btn btn-primary btn-lg"
+                [disabled]="!items().length || loadingCount() > 0"
+                (click)="convert()"
+              >
+                Convert to PDF
+              </button>
+              <button type="button" class="btn btn-secondary" (click)="reset()">Start over</button>
+            </aside>
+          </div>
+        }
+      }
+    }
+  </section>
+</div>

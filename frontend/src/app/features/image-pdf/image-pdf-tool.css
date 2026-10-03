@@ -1,0 +1,15 @@
+.skipped {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  font-size: 0.92rem;
+}
+
+.loading {
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.summary {
+  color: var(--color-text-muted);
+  font-size: 0.92rem;
+}
