@@ -67,7 +67,7 @@ PDFly/
 │           │   └── layout/          # site-header, site-footer
 │           ├── shared/
 │           │   ├── components/      # icon, file-dropzone, privacy-notice, tool-header,
-│           │   │                    # progress-indicator, result-panel, error-alert
+│           │   │                    # progress-indicator, result-panel, error-alert, size-change
 │           │   ├── pipes/           # file-size
 │           │   └── utils/           # download, file-accept, file-names, page-ranges
 │           ├── features/            # one folder per page (lazy-loaded)
@@ -77,9 +77,12 @@ PDFly/
 │           │   ├── image-to-pdf/    # thin page → image-pdf-tool (single)
 │           │   ├── images-to-pdf/   # thin page → image-pdf-tool (multiple)
 │           │   ├── pdf-to-image/    # pdf-to-image page + page-picker
+│           │   ├── compress-pdf/
+│           │   ├── compress-image/
 │           │   └── word-to-pdf/, pdf-to-word/   (Phase 3)
 │           ├── services/            # image-pdf-converter, image-loader, image-inspection,
 │           │                        # page-layout, pdf-renderer (pdf.js), zip-builder (fflate),
+│           │                        # pdf-compressor, image-compressor,
 │           │                        # api-client (ready for server tools)
 │           └── models/              # tool registry, image-pdf & pdf-image options, api-error, app-config
 └── backend/
@@ -150,6 +153,8 @@ cloud storage, auth.
 | Image → PDF | **Browser** | pdf-lib | Images embed directly into PDF pages; nothing needs a server |
 | Images → PDF | **Browser** | pdf-lib | Same engine, multi-page; reorder/rotate are just page parameters |
 | PDF → Image | **Browser** | pdf.js + canvas + fflate | pdf.js renders at print quality locally. An optional server fallback (pypdfium2) may be added for PDFs pdf.js cannot open, but is *opt-in and clearly labelled* |
+| Compress PDF | **Browser** | pdf-lib (+ pdf.js for "Maximum") | Re-encodes large embedded JPEG and 8-bit RGB/gray Flate images as JPEG (downscaled per level) while leaving text, vectors, fonts and links untouched. Unusual images (CMYK, indexed, masks, predictors, 16-bit, JPEG 2000) are skipped, so the worst case is "no change". "Maximum" rasterizes pages with pdf.js. Ghostscript, the usual server tool, is AGPL and therefore excluded |
+| Compress Image | **Browser** | Canvas `toBlob` | Quality mode, or target-size mode (binary search on quality, then resize if needed). EXIF orientation is applied and metadata dropped. PNG → JPEG/WebP automatically depending on transparency |
 | Word → PDF | **Server** | LibreOffice | No browser engine reproduces Word layout reliably |
 | PDF → Word | **Server** | LibreOffice or pdfplumber + python-docx (Phase 3) | Requires layout analysis that only exists in Python/native code |
 
@@ -237,5 +242,6 @@ for the Phase 3 conversion routes.
 |---|---|---|
 | **1 — Foundation** | Angular shell, design system, tool registry, home page; shared drop zone / file list / privacy notice / progress / result panel; env-based API config. **Image → PDF** and **Images → PDF** (browser). FastAPI foundation: settings, CORS, error model, upload validation, size guard, rate limit, health. Backend tests, Dockerfile, README, GitHub Pages workflow | ✅ Done |
 | 2 — PDF → Image | pdf.js in a worker, page thumbnails with select-all/none and page ranges, PNG/JPEG, JPEG quality, 72/150/300 DPI, single download or ZIP plus per-page downloads, cancel. Password-protected PDFs are reported, not opened | ✅ Done |
+| 2b — Compression | Compress PDF (Light / Recommended / Strong / Maximum) and Compress Image (quality or target size, resize, format, batch ZIP), all in the browser | ✅ Done |
 | 3 — Office conversions (next) | Word → PDF via LibreOffice (timeouts, concurrency semaphore, per-request profile), PDF → Word via the better of LibreOffice import or pdfplumber + python-docx, with clear quality caveats; Docker image with LibreOffice + fonts | |
 | 4 — Hardening & polish | E2E tests, accessibility audit (axe), backend CI, CSP/security headers, backend deployment guide, optional PWA/offline for local tools | |

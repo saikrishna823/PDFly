@@ -1,0 +1,226 @@
+<div class="tool-page container">
+  <app-tool-header [tool]="tool" />
+
+  <section class="tool-panel card" aria-label="Compressor">
+    @switch (phase()) {
+      @case ('processing') {
+        <app-progress-indicator [label]="progressLabel()" [percent]="progressPercent()" />
+        <div class="tool-actions">
+          <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+        </div>
+      }
+      @case ('done') {
+        @let single = outputs().length === 1 ? outputs()[0] : null;
+        <app-result-panel
+          [heading]="single ? 'Your image is ready' : 'Your images are ready'"
+          [downloadLabel]="single ? 'Download' : 'Download all (ZIP)'"
+          [fileName]="single ? single.name : archive()?.fileName ?? ''"
+          [fileSize]="single ? single.result.blob.size : archive()?.blob?.size ?? 0"
+          resetLabel="Compress more images"
+          (download)="downloadAll()"
+          (reset)="reset()"
+        >
+          <app-size-change [before]="totalBefore()" [after]="totalAfter()" />
+          <button type="button" class="link-btn" (click)="changeSettings()">Change settings</button>
+
+          @if (failures().length) {
+            <app-error-alert title="Some images couldn't be compressed" (dismiss)="failures.set([])">
+              <ul class="plain-list">
+                @for (line of failures(); track $index) {
+                  <li>{{ line }}</li>
+                }
+              </ul>
+            </app-error-alert>
+          }
+
+          <ul class="results" aria-label="Compressed images">
+            @for (output of outputs(); track output.input.id) {
+              <li class="result-row">
+                <img [src]="output.url" alt="" />
+                <div class="result-meta">
+                  <p class="name" [title]="output.name">{{ output.name }}</p>
+                  <app-size-change [before]="output.input.file.size" [after]="output.result.blob.size" />
+                  <p class="dims">{{ output.result.width }} × {{ output.result.height }} px</p>
+                  @if (noteFor(output); as note) {
+                    <p class="note">{{ note }}</p>
+                  }
+                </div>
+                <button
+                  type="button"
+                  class="icon-btn"
+                  title="Download"
+                  [attr.aria-label]="'Download ' + output.name"
+                  (click)="downloadOne(output)"
+                >
+                  <app-icon name="download" [size]="18" />
+                </button>
+              </li>
+            }
+          </ul>
+        </app-result-panel>
+      }
+      @default {
+        <div class="tool-messages">
+          @if (failures().length) {
+            <app-error-alert title="We couldn't compress these images" (dismiss)="failures.set([])">
+              <ul class="plain-list">
+                @for (line of failures(); track $index) {
+                  <li>{{ line }}</li>
+                }
+              </ul>
+            </app-error-alert>
+          }
+          @if (skipped().length) {
+            <app-error-alert title="Some files were not added" (dismiss)="skipped.set([])">
+              <ul class="plain-list">
+                @for (line of skipped(); track $index) {
+                  <li>{{ line }}</li>
+                }
+              </ul>
+            </app-error-alert>
+          }
+        </div>
+
+        @if (!items().length) {
+          <app-file-dropzone
+            [accept]="accept"
+            [maxBytes]="maxBytes"
+            [multiple]="true"
+            title="Drop your images here"
+            buttonLabel="Select images"
+            [hint]="hint"
+            (selected)="addFiles($event)"
+          />
+        } @else {
+          <div class="tool-workspace">
+            <div class="tool-main">
+              <ul class="inputs" aria-label="Images to compress">
+                @for (item of items(); track item.id) {
+                  <li class="input-row">
+                    <img [src]="item.previewUrl" alt="" />
+                    <div class="input-meta">
+                      <p class="name" [title]="item.file.name">{{ item.file.name }}</p>
+                      <p class="dims">{{ item.file.size | fileSize }}</p>
+                    </div>
+                    <button
+                      type="button"
+                      class="icon-btn danger"
+                      title="Remove"
+                      [attr.aria-label]="'Remove ' + item.file.name"
+                      (click)="removeItem(item)"
+                    >
+                      <app-icon name="trash" [size]="18" />
+                    </button>
+                  </li>
+                }
+              </ul>
+
+              <app-file-dropzone
+                [accept]="accept"
+                [maxBytes]="maxBytes"
+                [multiple]="true"
+                [compact]="true"
+                title="Add more images"
+                buttonLabel="Add images"
+                (selected)="addFiles($event)"
+              />
+            </div>
+
+            <aside class="tool-sidebar">
+              <form class="settings" [formGroup]="form" (ngSubmit)="compress()">
+                <fieldset class="choice-list">
+                  <legend>Compression</legend>
+                  <label class="choice">
+                    <input type="radio" name="mode" value="quality" formControlName="mode" />
+                    <span class="choice-label">Choose quality</span>
+                  </label>
+                  <label class="choice">
+                    <input type="radio" name="mode" value="target" formControlName="mode" />
+                    <span class="choice-label">Reach a target size</span>
+                    <span class="choice-description">We find the best quality that fits.</span>
+                  </label>
+                </fieldset>
+
+                @if (settings().mode === 'quality') {
+                  <div class="field">
+                    <label class="field-label" for="opt-quality">Quality: {{ settings().quality }}%</label>
+                    <input id="opt-quality" type="range" min="10" max="100" step="5" formControlName="quality" />
+                    <p class="field-hint">Lower quality makes smaller files. 60–80% suits most photos.</p>
+                  </div>
+                } @else {
+                  <div class="field">
+                    <label class="field-label" for="opt-target">Maximum size per image</label>
+                    <div class="target">
+                      <input
+                        id="opt-target"
+                        class="input"
+                        type="number"
+                        min="1"
+                        step="any"
+                        inputmode="decimal"
+                        formControlName="targetValue"
+                        [attr.aria-invalid]="targetTooSmall() || form.controls.targetValue.invalid ? 'true' : null"
+                        aria-describedby="target-help"
+                      />
+                      <select class="select unit" formControlName="targetUnit" aria-label="Unit">
+                        <option value="KB">KB</option>
+                        <option value="MB">MB</option>
+                      </select>
+                    </div>
+                    @if (targetTooSmall() || form.controls.targetValue.invalid) {
+                      <p class="field-error">Enter a size of at least 10 KB.</p>
+                    }
+                    <p id="target-help" class="field-hint">If quality alone isn't enough, the image is also resized.</p>
+                  </div>
+                }
+
+                <div class="field">
+                  <label class="field-label" for="opt-size">Resize</label>
+                  <select id="opt-size" class="select" formControlName="maxDimension">
+                    @for (choice of dimensions; track choice.value) {
+                      <option [ngValue]="choice.value">{{ choice.label }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label class="field-label" for="opt-format">Format</label>
+                  <select id="opt-format" class="select" formControlName="format">
+                    @for (choice of formats; track choice.value) {
+                      <option [ngValue]="choice.value">{{ choice.label }}</option>
+                    }
+                  </select>
+                  <p class="field-hint">
+                    @switch (settings().format) {
+                      @case ('auto') {
+                        JPEGs and WebPs keep their format; PNGs become JPEG, or WebP if they have transparency.
+                      }
+                      @case ('jpeg') {
+                        Transparent areas become white.
+                      }
+                      @case ('png') {
+                        PNG is lossless, so only resizing makes it smaller.
+                      }
+                      @default {
+                        Supported by all modern browsers and apps.
+                      }
+                    }
+                  </p>
+                </div>
+
+                <p class="privacy-note">
+                  <app-icon name="shield" [size]="16" /> Location and camera details (EXIF) are removed.
+                </p>
+
+                <button type="submit" class="btn btn-primary btn-lg">
+                  Compress {{ items().length }} {{ items().length === 1 ? 'image' : 'images' }}
+                </button>
+                <button type="button" class="btn btn-secondary" (click)="reset()">Start over</button>
+              </form>
+            </aside>
+          </div>
+        }
+      }
+    }
+  </section>
+</div>

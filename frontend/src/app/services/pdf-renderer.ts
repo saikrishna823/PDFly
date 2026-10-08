@@ -50,6 +50,13 @@ export class PdfDocument {
     return (await this.render(pageNumber, scale, 'image/jpeg', 0.75)).blob;
   }
 
+  /** Page size in PDF points, with the page's own rotation applied. */
+  async pageSize(pageNumber: number): Promise<{ width: number; height: number }> {
+    const page = await this.doc.getPage(pageNumber);
+    const { width, height } = page.getViewport({ scale: 1 });
+    return { width, height };
+  }
+
   renderPage(pageNumber: number, options: PdfImageOptions): Promise<RenderedPage> {
     return this.render(pageNumber, options.dpi / PDF_POINTS_PER_INCH, IMAGE_MIME[options.format], options.quality / 100);
   }

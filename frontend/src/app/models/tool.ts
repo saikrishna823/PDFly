@@ -7,6 +7,8 @@ export type ToolId =
   | 'image-to-pdf'
   | 'images-to-pdf'
   | 'pdf-to-image'
+  | 'compress-pdf'
+  | 'compress-image'
   | 'word-to-pdf'
   | 'pdf-to-word';
 
@@ -51,6 +53,26 @@ export const TOOLS: readonly ToolDefinition[] = [
     shortTitle: 'PDF → Image',
     description: 'Save PDF pages as PNG or JPEG images.',
     icon: 'file-image',
+    processing: 'local',
+    status: 'available',
+  },
+  {
+    id: 'compress-pdf',
+    path: 'compress-pdf',
+    title: 'Compress PDF',
+    shortTitle: 'Compress PDF',
+    description: 'Make a PDF smaller by optimizing the photos and scans inside it.',
+    icon: 'file-down',
+    processing: 'local',
+    status: 'available',
+  },
+  {
+    id: 'compress-image',
+    path: 'compress-image',
+    title: 'Compress Image',
+    shortTitle: 'Compress Image',
+    description: 'Shrink JPG, PNG or WebP images, or fit them under a size you choose.',
+    icon: 'compress',
     processing: 'local',
     status: 'available',
   },

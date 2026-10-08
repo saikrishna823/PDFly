@@ -21,5 +21,15 @@ export const routes: Routes = [
     loadComponent: () => import('./features/pdf-to-image/pdf-to-image').then((m) => m.PdfToImage),
     title: 'PDF to Image · PDFly',
   },
+  {
+    path: 'compress-pdf',
+    loadComponent: () => import('./features/compress-pdf/compress-pdf').then((m) => m.CompressPdf),
+    title: 'Compress PDF · PDFly',
+  },
+  {
+    path: 'compress-image',
+    loadComponent: () => import('./features/compress-image/compress-image').then((m) => m.CompressImage),
+    title: 'Compress Image · PDFly',
+  },
   { path: '**', redirectTo: '' },
 ];

@@ -9,6 +9,8 @@ operations that genuinely need server-side software, and it never stores files.
 | Image → PDF | Browser (pdf-lib) | ✅ |
 | Images → PDF (reorder, rotate) | Browser (pdf-lib) | ✅ |
 | PDF → Image (pick pages, PNG/JPEG, 72–300 DPI, ZIP) | Browser (pdf.js) | ✅ |
+| Compress PDF (4 levels; text stays selectable except "Maximum") | Browser (pdf-lib + pdf.js) | ✅ |
+| Compress Image (quality or target size, resize, batch ZIP, strips EXIF) | Browser (canvas) | ✅ |
 | Word → PDF | Server (LibreOffice) | Phase 3 |
 | PDF → Word | Server (permissive engine chosen in Phase 3) | Phase 3 |
 

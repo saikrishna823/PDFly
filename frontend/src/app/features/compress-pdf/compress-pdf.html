@@ -1,0 +1,99 @@
+<div class="tool-page container">
+  <app-tool-header [tool]="tool" />
+
+  <section class="tool-panel card" aria-label="Compressor">
+    @switch (phase()) {
+      @case ('processing') {
+        <app-progress-indicator [label]="progressLabel()" [percent]="progressPercent()" />
+        <div class="tool-actions">
+          <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+        </div>
+      }
+      @case ('done') {
+        @if (result(); as r) {
+          <app-result-panel
+            [heading]="r.keptOriginal ? 'This PDF is already well compressed' : 'Your PDF is smaller'"
+            [downloadLabel]="r.keptOriginal ? 'Download original' : 'Download'"
+            [fileName]="r.keptOriginal ? file()!.name : r.fileName"
+            [fileSize]="r.blob.size"
+            resetLabel="Compress another PDF"
+            (download)="download()"
+            (reset)="reset()"
+          >
+            <app-size-change [before]="file()!.size" [after]="r.blob.size" />
+
+            @if (r.keptOriginal) {
+              <p class="detail">
+                We couldn't make it smaller at this level. A stronger level may help.
+              </p>
+            } @else if (r.rasterized) {
+              <p class="detail">Every page was saved as an image, so text can't be selected or searched.</p>
+            } @else {
+              <p class="detail">
+                {{ r.imagesRecompressed }} {{ r.imagesRecompressed === 1 ? 'image was' : 'images were' }} optimized.
+                Text, links and layout are unchanged.
+              </p>
+            }
+            <button type="button" class="link-btn" (click)="changeLevel()">Try a different level</button>
+          </app-result-panel>
+        }
+      }
+      @default {
+        <div class="tool-messages">
+          @if (error(); as message) {
+            <app-error-alert [message]="message" (dismiss)="error.set(null)" />
+          }
+        </div>
+
+        @if (phase() === 'select') {
+          <app-file-dropzone
+            accept=".pdf,application/pdf"
+            [maxBytes]="maxBytes"
+            title="Drop your PDF here"
+            buttonLabel="Select PDF"
+            [hint]="hint"
+            (selected)="onSelected($event)"
+          />
+        } @else if (file(); as f) {
+          <div class="layout">
+            <div class="file-row">
+              <span class="file-row-icon"><app-icon name="file" [size]="22" /></span>
+              <div class="file-row-meta">
+                <p class="file-row-name" [title]="f.name">{{ f.name }}</p>
+                <p class="file-row-size">{{ f.size | fileSize }}</p>
+              </div>
+              <button type="button" class="icon-btn danger" [attr.aria-label]="'Remove ' + f.name" title="Remove" (click)="reset()">
+                <app-icon name="close" [size]="18" />
+              </button>
+            </div>
+
+            <fieldset class="choice-list">
+              <legend>Compression level</legend>
+              @for (choice of levels; track choice.value) {
+                <label class="choice">
+                  <input type="radio" name="level" [value]="choice.value" [formControl]="levelControl" />
+                  <span class="choice-label">{{ choice.label }}</span>
+                  <span class="choice-description">{{ choice.description }}</span>
+                </label>
+              }
+            </fieldset>
+
+            @if (level() === 'maximum') {
+              <p class="warning" role="note">
+                <app-icon name="alert" [size]="18" />
+                Maximum turns pages into pictures: you won't be able to select, copy or search the text, and links stop
+                working. Use it for scans or when size matters most.
+              </p>
+            }
+
+            <div class="tool-actions">
+              <button type="button" class="btn btn-primary btn-lg" (click)="compress()">
+                <app-icon name="file-down" /> Compress PDF
+              </button>
+            </div>
+          </div>
+        }
+      }
+    }
+  </section>
+</div>

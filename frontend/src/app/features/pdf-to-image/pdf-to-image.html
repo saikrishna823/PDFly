@@ -81,10 +81,10 @@
           <div class="tool-workspace">
             <div class="tool-main">
               <div class="file-row">
-                <span class="file-icon"><app-icon name="file" [size]="22" /></span>
-                <div class="file-meta">
-                  <p class="file-name" [title]="f.name">{{ f.name }}</p>
-                  <p class="file-size">
+                <span class="file-row-icon"><app-icon name="file" [size]="22" /></span>
+                <div class="file-row-meta">
+                  <p class="file-row-name" [title]="f.name">{{ f.name }}</p>
+                  <p class="file-row-size">
                     {{ f.size | fileSize }} · {{ pageCount() }} {{ pageCount() === 1 ? 'page' : 'pages' }}
                   </p>
                 </div>

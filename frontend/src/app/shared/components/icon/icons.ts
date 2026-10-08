@@ -19,6 +19,8 @@ export const ICONS = {
   'file-text': [FILE, 'M9 12h6', 'M9 16h6', 'M9 8h2'],
   'file-edit': [FILE, 'M9 12h3', 'M10 19l.5-2.5 4.5-4.5 2 2-4.5 4.5z'],
   file: [FILE],
+  'file-down': [FILE, 'M12 11v6', 'M9 14l3 3 3-3'],
+  compress: ['M4 14h6v6', 'M20 10h-6V4', 'M14 10l7-7', 'M3 21l7-7'],
   shield: ['M12 3l8 3v6c0 4.8-3.4 8-8 9-4.6-1-8-4.2-8-9V6z', 'M9 12l2 2 4-4'],
   device: [rect(4, 5, 16, 11, 1.5), 'M2 19h20'],
   server: [rect(3, 4, 18, 7, 2), rect(3, 13, 18, 7, 2), 'M7 7.5h.01', 'M7 16.5h.01'],

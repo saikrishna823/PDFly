@@ -1,0 +1,30 @@
+.layout {
+  display: grid;
+  gap: 24px;
+  max-width: 640px;
+}
+
+.warning {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--color-danger-soft);
+  color: var(--color-text);
+  font-size: 0.92rem;
+}
+
+.warning app-icon {
+  color: var(--color-danger);
+  margin-top: 2px;
+}
+
+.detail {
+  max-width: 60ch;
+  color: var(--color-text-muted);
+}
+
+.tool-actions {
+  margin-top: 0;
+}
